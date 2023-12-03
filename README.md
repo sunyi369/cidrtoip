@@ -1,1 +1,3 @@
-# cidrtoip
+一个简单的cidr转ip网页
+可以批量转换
+可以选一个cide随机抽取几个ip
