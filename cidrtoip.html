@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CIDR to IP Converter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        label {
+            margin-right: 10px;
+        }
+
+        textarea, input, button {
+            margin-bottom: 10px;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        textarea, input {
+            padding: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>CIDR to IP Converter</h1>
+
+    <label for="cidrInput">Enter CIDR:</label>
+    <textarea id="cidrInput" rows="5" cols="50"></textarea>
+
+    <br>
+
+    <label for="ipCount">Number of IPs:</label>
+    <input type="number" id="ipCount" min="1" disabled>
+    
+    <input type="checkbox" id="selectAll" onclick="toggleIpCount()"> <label for="selectAll">Select All</label>
+
+    <br>
+
+    <button onclick="convertCidrToIp()">Convert</button>
+
+    <br>
+
+    <label for="ipOutput">IP Addresses:</label>
+    <textarea id="ipOutput" rows="10" cols="50" readonly></textarea>
+
+    <script>
+        function toggleIpCount() {
+            var ipCountInput = document.getElementById('ipCount');
+            var selectAllCheckbox = document.getElementById('selectAll');
+            ipCountInput.disabled = selectAllCheckbox.checked;
+        }
+
+        function getRandomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function convertCidrToIp() {
+            var cidrInput = document.getElementById('cidrInput').value;
+            var ipCountInput = document.getElementById('ipCount');
+            var selectAllCheckbox = document.getElementById('selectAll');
+
+            var ipCount = selectAllCheckbox.checked ? 'all' : ipCountInput.value;
+            var ipAddresses = convertCidrToIpHelper(cidrInput, ipCount);
+            
+            document.getElementById('ipOutput').value = ipAddresses.join('\n');
+        }
+
+        function convertCidrToIpHelper(cidrInput, count) {
+            var ipAddresses = [];
+            var cidrArray = cidrInput.split('\n').filter(Boolean);
+
+            cidrArray.forEach(function (cidr) {
+                var parts = cidr.split('/');
+                var baseIp = parts[0];
+                var subnetMask = parseInt(parts[1]);
+
+                var ipArray = baseIp.split('.').map(Number);
+                var ipNumber = (ipArray[0] << 24) | (ipArray[1] << 16) | (ipArray[2] << 8) | ipArray[3];
+
+                var totalIps = Math.pow(2, 32 - subnetMask);
+                var selectedIps = [];
+
+                if (count === 'all') {
+                    for (var i = 0; i < totalIps; i++) {
+                        var currentIpNumber = ipNumber + i;
+                        var currentIpArray = [
+                            (currentIpNumber >> 24) & 255,
+                            (currentIpNumber >> 16) & 255,
+                            (currentIpNumber >> 8) & 255,
+                            currentIpNumber & 255
+                        ];
+                        var currentIp = currentIpArray.join('.');
+                        selectedIps.push(currentIp);
+                    }
+                } else {
+                    while (selectedIps.length < count) {
+                        var randomIpNumber = ipNumber + getRandomInt(0, totalIps - 1);
+                        var randomIpArray = [
+                            (randomIpNumber >> 24) & 255,
+                            (randomIpNumber >> 16) & 255,
+                            (randomIpNumber >> 8) & 255,
+                            randomIpNumber & 255
+                        ];
+                        var randomIp = randomIpArray.join('.');
+                        
+                        if (!selectedIps.includes(randomIp)) {
+                            selectedIps.push(randomIp);
+                        }
+                    }
+                }
+
+                ipAddresses = ipAddresses.concat(selectedIps);
+            });
+
+            return ipAddresses;
+        }
+    </script>
+</body>
+</html>
